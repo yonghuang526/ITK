@@ -30,7 +30,7 @@
 namespace itk
 {
 // after use by filter
-bool DataObject:: m_GlobalReleaseDataFlag = false;
+bool * DataObject:: m_GlobalReleaseDataFlag;
 
 DataObjectError
 ::DataObjectError():
@@ -164,11 +164,19 @@ void
 DataObject
 ::SetGlobalReleaseDataFlag(bool val)
 {
-  if ( val == m_GlobalReleaseDataFlag )
+  if ( val == *m_GlobalReleaseDataFlag )
     {
     return;
     }
-  m_GlobalReleaseDataFlag = val;
+  *m_GlobalReleaseDataFlag = val;
+}
+
+void
+DataObject
+::SetGlobalReleaseDataFlag(void* val)
+{
+  delete m_GlobalReleaseDataFlag;
+  m_GlobalReleaseDataFlag = reinterpret_cast<bool*>(val);
 }
 
 //----------------------------------------------------------------------------
@@ -176,6 +184,13 @@ bool
 DataObject
 ::GetGlobalReleaseDataFlag()
 {
+  if( m_GlobalReleaseDataFlag == nullptr )
+    {
+      static auto func = [](void * a){ SetGlobalReleaseDataFlag(a); };
+      static auto deleteFunc = [](){ delete m_GlobalReleaseDataFlag; };
+      m_GlobalReleaseDataFlag = Singleton<bool>("GlobalReleaseDataFlag", func, deleteFunc);
+      *m_GlobalReleaseDataFlag = false; // initialization
+    }
   return m_GlobalReleaseDataFlag;
 }
 

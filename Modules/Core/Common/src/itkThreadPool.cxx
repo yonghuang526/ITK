@@ -39,16 +39,6 @@ namespace itk
 
 namespace
 {
-/** \brief A function which does nothing
- *
- * This function is to be used to mark parameters as unused to suppress
- * compiler warning. It can be used when the parameter needs to be named
- * (i.e. itkNotUsed cannot be used) but is not always used. It ensures
- * that the parameter is not optimized out.
- */
-template <typename T>
-void Unused( const T &) {};
-
 // This ensures that m_ThreadPoolGlobals is has been initialized once
 // the library has been loaded. In some cases, this call will perform the
 // initialization. In other cases, static initializers like the IO factory

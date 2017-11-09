@@ -17,7 +17,7 @@
  *=========================================================================*/
 #include "itkFloatingPointExceptions.h"
 #include <iostream>
-
+#include "itkSingleton.h"
 //
 // invariant over all targets -- set a preference for what
 // happens when an exception occurs
@@ -390,35 +390,47 @@ extern "C"
 namespace itk
 {
 
-FloatingPointExceptions::ExceptionAction
-FloatingPointExceptions::m_ExceptionAction =
-  FloatingPointExceptions::ABORT;
-bool FloatingPointExceptions::m_Enabled(false);
+struct ExceptionGlobals
+{
+  ExceptionGlobals():m_ExceptionAction(FloatingPointExceptions::ABORT),
+  m_Enabled(false)
+  {};
+  FloatingPointExceptions::ExceptionAction m_ExceptionAction;
+  bool m_Enabled;
+};
 
 void
 FloatingPointExceptions
 ::SetExceptionAction(ExceptionAction a)
 {
-  FloatingPointExceptions::m_ExceptionAction = a;
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
+  FloatingPointExceptions::m_ExceptionGlobals->m_ExceptionAction = a;
 }
 
 FloatingPointExceptions::ExceptionAction
 FloatingPointExceptions::GetExceptionAction()
 {
-  return FloatingPointExceptions::m_ExceptionAction;
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
+  return FloatingPointExceptions::m_ExceptionGlobals->m_ExceptionAction;
 }
 
 bool
 FloatingPointExceptions::
 GetEnabled()
 {
-  return FloatingPointExceptions::m_Enabled;
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
+  return FloatingPointExceptions::m_ExceptionGlobals->m_Enabled;
 }
 
 void
 FloatingPointExceptions::
 SetEnabled(bool val)
 {
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
   if(val)
     {
     FloatingPointExceptions::Enable();
@@ -437,18 +449,22 @@ SetEnabled(bool val)
 void FloatingPointExceptions
 ::Enable()
 {
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
   // enable floating point exceptions on MSVC
   _controlfp(_EM_DENORMAL | _EM_UNDERFLOW | _EM_INEXACT, _MCW_EM);
-  FloatingPointExceptions::m_Enabled = true;
+  FloatingPointExceptions::m_ExceptionGlobals->m_Enabled = true;
 }
 
 void FloatingPointExceptions
 ::Disable()
 {
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
   // disable floating point exceptions on MSVC
   _controlfp(_EM_INVALID | _EM_DENORMAL | _EM_ZERODIVIDE | _EM_OVERFLOW |
              _EM_UNDERFLOW | _EM_INEXACT, _MCW_EM);
-  FloatingPointExceptions::m_Enabled = false;
+  FloatingPointExceptions::m_ExceptionGlobals->m_Enabled = false;
 }
 
 #else // defined(_MSC_VER)
@@ -492,6 +508,8 @@ void
 FloatingPointExceptions
 ::Enable()
 {
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
   feenableexcept (FE_DIVBYZERO);
   feenableexcept (FE_INVALID);
   feenableexcept (FPE_FLTOVF);
@@ -507,12 +525,14 @@ FloatingPointExceptions
   sigemptyset(&act.sa_mask);
   act.sa_flags = SA_SIGINFO;
   sigaction(SIGFPE,&act,nullptr);
-  FloatingPointExceptions::m_Enabled = true;
+  FloatingPointExceptions::m_ExceptionGlobals->m_Enabled = true;
 }
 void
 FloatingPointExceptions
 ::Disable()
 {
+  static ExceptionGlobals * exceptionGlobals = GetExceptionGlobals();
+  Unused(exceptionGlobals);
   fedisableexcept (FE_DIVBYZERO);
   fedisableexcept (FE_INVALID);
   fedisableexcept (FPE_FLTOVF);
@@ -521,9 +541,31 @@ FloatingPointExceptions
   fedisableexcept (FPE_FLTSUB);
   fedisableexcept (FPE_INTDIV);
   fedisableexcept (FPE_INTOVF);
-  FloatingPointExceptions::m_Enabled = false;
+  FloatingPointExceptions::m_ExceptionGlobals->m_Enabled = false;
 }
 
 #endif // defined(_WIN32) || !defined(ITK_HAVE_FENV_H) || !defined(ITK_HAS_FEENABLEEXCEPT)
 
+void
+FloatingPointExceptions
+::SetExceptionGlobals(void * exceptions)
+{
+  delete m_ExceptionGlobals;
+  m_ExceptionGlobals = reinterpret_cast<ExceptionGlobals *>(exceptions);
+}
+
+ExceptionGlobals*
+FloatingPointExceptions
+::GetExceptionGlobals()
+{
+  if( m_ExceptionGlobals == nullptr )
+    {
+      static auto func = [](void * a){ SetExceptionGlobals(a); };
+      static auto deleteFunc = [](){ delete m_ExceptionGlobals; };
+      m_ExceptionGlobals = Singleton<ExceptionGlobals>("ExceptionGlobals", func, deleteFunc);
+    }
+  return m_ExceptionGlobals;
+}
+
+ExceptionGlobals * FloatingPointExceptions::m_ExceptionGlobals;
 } // end of itk namespace

@@ -29,6 +29,7 @@
 #define itkObjectFactoryBase_h
 
 #include "itkCreateObjectFunction.h"
+#include "itkSingleton.h"
 #include <list>
 #include <vector>
 
@@ -204,7 +205,7 @@ public:
    * removed in the future. Also note that SetObjectFactoryBasePrivate is not
    * concurrent thread safe. */
   static ObjectFactoryBasePrivate *GetObjectFactoryBase();
-  static void SynchronizeObjectFactoryBase(ObjectFactoryBasePrivate * objectFactoryBasePrivate);
+  static void SynchronizeObjectFactoryBase(void * objectFactoryBasePrivate);
 
 protected:
   void PrintSelf(std::ostream & os, Indent indent) const override;
@@ -259,9 +260,38 @@ private:
 
   static  bool  m_StrictVersionChecking;
 
-  // This variable should NOT be accessed directly, but through GetObjectFactoryBase
   static ObjectFactoryBasePrivate * m_ObjectFactoryBasePrivate;
 };
+
+struct ObjectFactoryBasePrivate
+{
+  ~ObjectFactoryBasePrivate()
+  {
+    ::itk::ObjectFactoryBase::UnRegisterAllFactories();
+    if ( m_InternalFactories )
+      {
+      for ( std::list< itk::ObjectFactoryBase * >::iterator i =
+              m_InternalFactories->begin();
+            i != m_InternalFactories->end(); ++i )
+        {
+        (*i)->UnRegister();
+        }
+      delete m_InternalFactories;
+      m_InternalFactories = nullptr;
+      }
+  }
+  ObjectFactoryBasePrivate()
+  {
+    m_RegisteredFactories = nullptr;
+    m_InternalFactories = nullptr;
+    m_Initialized = false;
+  }
+
+  std::list< ::itk::ObjectFactoryBase * > * m_RegisteredFactories;
+  std::list< ::itk::ObjectFactoryBase * > * m_InternalFactories;
+  bool              m_Initialized;
+};
+
 } // end namespace itk
 
 #endif

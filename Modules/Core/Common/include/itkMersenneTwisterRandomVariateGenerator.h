@@ -119,6 +119,8 @@ namespace Statistics
  * \wikiexample{Utilities/MersenneTwisterRandomVariateGenerator,Random number generator}
  * \endwiki
  */
+struct MersenneTwisterGlobals;
+
 class ITKCommon_EXPORT MersenneTwisterRandomVariateGenerator:
   public RandomVariateGeneratorBase
 {
@@ -278,6 +280,12 @@ protected:
 
 private:
 
+  /** Internal method for synchronization across modules. */
+  static void SetStaticGlobals(void * globals);
+
+  /** Internal method for synchronization across modules. */
+  static MersenneTwisterGlobals * GetStaticGlobals();
+
   /** Internal method to actually create a new object. */
   static Pointer CreateInstance();
 
@@ -285,9 +293,7 @@ private:
   SimpleFastMutexLock m_InstanceLock;
 
   // Static/Global Variable need to be thread-safely accessed
-  static Pointer             m_StaticInstance;
-  static SimpleFastMutexLock m_StaticInstanceLock;
-  static IntegerType         m_StaticDiffer;
+  static MersenneTwisterGlobals *m_StaticGlobals;
 
 };  // end of class
 

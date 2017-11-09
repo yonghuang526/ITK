@@ -28,8 +28,8 @@
 #include "itkMultiThreaderBase.h"
 #include "itkPlatformMultiThreader.h"
 #include "itkPoolMultiThreader.h"
-#include "itkNumericTraits.h"
 #include "itkMutexLockHolder.h"
+#include "itkNumericTraits.h"
 #include "itkSimpleFastMutexLock.h"
 #include "itksys/SystemTools.hxx"
 #include "itkImageSourceCommon.h"
@@ -88,76 +88,6 @@ namespace itk
   };
 }//end of itk namespace
 
-namespace
-{
-static ::itk::SimpleFastMutexLock globalInitializerLock;
-
-/** \brief A function which does nothing
- *
- * This function is to be used to mark parameters as unused to suppress
- * compiler warning. It can be used when the parameter needs to be named
- * (i.e. itkNotUsed cannot be used) but is not always used. It ensures
- * that the parameter is not optimized out.
- */
-template <typename T>
-void Unused( const T &) {};
-
-// This ensures that m_MultiThreaderBaseGlobals is has been initialized once the library
-// has been loaded. In some cases, this call will perform the initialization.
-// In other cases, static initializers like the IO factory initialization code
-// will have done the initialization.
-static ::itk::MultiThreaderBaseGlobals * initializedMultiThreaderBaseGlobals = ::itk::MultiThreaderBase::GetMultiThreaderBaseGlobals();
-
-/** \class MultiThreaderBaseGlobalsInitializer
- *
- * \brief Initialize a MultiThreaderBaseGlobals and delete it on program
- * completion.
- * */
-class MultiThreaderBaseGlobalsInitializer
-{
-public:
-  using Self = MultiThreaderBaseGlobalsInitializer;
-
-  MultiThreaderBaseGlobalsInitializer() {}
-
-  /** Delete the time stamp if it was created. */
-  ~MultiThreaderBaseGlobalsInitializer()
-    {
-    delete m_MultiThreaderBaseGlobals;
-    m_MultiThreaderBaseGlobals = nullptr;
-    }
-
-  /** Create the MultiThreaderBaseGlobals if needed and return it. */
-  static ::itk::MultiThreaderBaseGlobals * GetMultiThreaderBaseGlobals()
-    {
-    if( !m_MultiThreaderBaseGlobals )
-      {
-      // GetGlobalDefaultThreaderType() must be thread safe and can potentially call
-      // this method, even though it is very unlikely.
-      ::itk::MutexLockHolder< ::itk::SimpleFastMutexLock > lock(globalInitializerLock);
-      if( !m_MultiThreaderBaseGlobals )
-        {
-        m_MultiThreaderBaseGlobals = new ::itk::MultiThreaderBaseGlobals;
-        // To avoid being optimized out. The compiler does not like this
-        // statement at a higher scope.
-        Unused(initializedMultiThreaderBaseGlobals);
-        }
-      }
-    return m_MultiThreaderBaseGlobals;
-    }
-
-private:
-  static ::itk::MultiThreaderBaseGlobals * m_MultiThreaderBaseGlobals;
-};
-
-// Takes care of cleaning up the MultiThreaderBaseGlobals
-static MultiThreaderBaseGlobalsInitializer MultiThreaderBaseGlobalsInitializerInstance;
-// Initialized by the compiler to zero
-::itk::MultiThreaderBaseGlobals * MultiThreaderBaseGlobalsInitializer::m_MultiThreaderBaseGlobals;
-
-} // end anonymous namespace
-
-
 namespace itk
 {
 
@@ -167,7 +97,9 @@ MultiThreaderBase
 {
   if( m_MultiThreaderBaseGlobals == nullptr )
     {
-    m_MultiThreaderBaseGlobals = MultiThreaderBaseGlobalsInitializer::GetMultiThreaderBaseGlobals();
+    static auto func = [](void * a){ MultiThreaderBase::SetMultiThreaderBaseGlobals(a); };
+    static auto deleteFunc = [](){ delete MultiThreaderBase::m_MultiThreaderBaseGlobals; };
+    m_MultiThreaderBaseGlobals = Singleton<MultiThreaderBaseGlobals>("MultiThreaderBaseGlobals", func, deleteFunc);
     }
   return m_MultiThreaderBaseGlobals;
 }
@@ -175,9 +107,9 @@ MultiThreaderBase
 
 void
 MultiThreaderBase
-::SetMultiThreaderBaseGlobals( MultiThreaderBaseGlobals * multiThreaderBaseGlobals )
+::SetMultiThreaderBaseGlobals( void * multiThreaderBaseGlobals )
 {
-  m_MultiThreaderBaseGlobals = multiThreaderBaseGlobals;
+  m_MultiThreaderBaseGlobals = reinterpret_cast<MultiThreaderBaseGlobals *>(multiThreaderBaseGlobals);
 }
 
 #if ! defined (ITK_LEGACY_REMOVE)

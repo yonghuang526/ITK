@@ -33,7 +33,7 @@ namespace itk
 /**
  * Initialize static member that controls warning display.
  */
-bool Object:: m_GlobalWarningDisplay = true;
+bool * Object:: m_GlobalWarningDisplay;
 
 class ITKCommon_HIDDEN Observer
 {
@@ -477,7 +477,16 @@ void
 Object
 ::SetGlobalWarningDisplay(bool val)
 {
-  m_GlobalWarningDisplay = val;
+  *m_GlobalWarningDisplay = val;
+}
+
+
+void
+Object
+::SetGlobalWarningDisplay(void* val)
+{
+  delete m_GlobalWarningDisplay;
+  m_GlobalWarningDisplay = reinterpret_cast<bool *>(val);
 }
 
 /**
@@ -487,7 +496,14 @@ bool
 Object
 ::GetGlobalWarningDisplay()
 {
-  return m_GlobalWarningDisplay;
+  if( m_GlobalWarningDisplay == nullptr )
+    {
+      static auto func = [](void * a){ SetGlobalWarningDisplay(a); };
+      static auto deleteFunc = [](){ delete m_GlobalWarningDisplay; };
+      m_GlobalWarningDisplay = Singleton<bool>("GlobalWarningDisplay", func, deleteFunc);
+      *m_GlobalWarningDisplay = true; // initialization
+    }
+  return *m_GlobalWarningDisplay;
 }
 
 unsigned long

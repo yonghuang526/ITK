@@ -27,69 +27,7 @@
  *=========================================================================*/
 #include "itkTimeStamp.h"
 
-namespace
-{
-/** \brief A function which does nothing
- *
- * This function is to be used to mark parameters as unused to suppress
- * compiler warning. It can be used when the parameter needs to be named
- * (i.e. itkNotUsed cannot be used) but is not always used. It ensures
- * that the parameter is not optimized out.
- */
-template <typename T>
-void Unused( const T &) {};
-
-// This ensures that m_GlobalTimeStamp is has been initialized once the library
-// has been loaded. In some cases, this call will perform the initialization.
-// In other cases, static initializers like the IO factory initialization code
-// will have done the initialization.
-static ::itk::TimeStamp::GlobalTimeStampType * initializedGlobalTimeStamp = ::itk::TimeStamp::GetGlobalTimeStamp();
-
-/** \class GlobalTimeStampInitializer
- *
- * \brief Initialize a GlobalTimeStamp and delete it on program
- * completion.
- * */
-class GlobalTimeStampInitializer
-{
-public:
-  using Self = GlobalTimeStampInitializer;
-  using GlobalTimeStampType = ::itk::TimeStamp::GlobalTimeStampType;
-
-  GlobalTimeStampInitializer() {}
-
-  /** Delete the time stamp if it was created. */
-  ~GlobalTimeStampInitializer()
-    {
-    delete m_GlobalTimeStamp;
-    m_GlobalTimeStamp = nullptr;
-    }
-
-  /** Create the GlobalTimeStamp if needed and return it. */
-  static GlobalTimeStampType * GetGlobalTimeStamp()
-    {
-    if( !m_GlobalTimeStamp )
-      {
-      m_GlobalTimeStamp = new GlobalTimeStampType( 0 );
-
-      // To avoid being optimized out. The compiler does not like this
-      // statement at a higher scope.
-      Unused(initializedGlobalTimeStamp);
-      }
-    return m_GlobalTimeStamp;
-    }
-
-private:
-  static GlobalTimeStampType * m_GlobalTimeStamp;
-};
-
-// Takes care of cleaning up the GlobalTimeStamp
-static GlobalTimeStampInitializer GlobalTimeStampInitializerInstance;
-// Initialized by the compiler to zero
-GlobalTimeStampInitializer::GlobalTimeStampType * GlobalTimeStampInitializer::m_GlobalTimeStamp;
-
-} // end anonymous namespace
-
+#include <functional>
 
 namespace itk
 {
@@ -114,24 +52,28 @@ TimeStamp::operator=( const Self & other )
   return *this;
 }
 
-
 TimeStamp::GlobalTimeStampType *
 TimeStamp
 ::GetGlobalTimeStamp()
 {
   if( m_GlobalTimeStamp == nullptr )
     {
-    m_GlobalTimeStamp = GlobalTimeStampInitializer::GetGlobalTimeStamp();
+      static auto func = [](void * a){ SetGlobalTimeStamp(a); };
+      static auto deleteFunc = [](){ delete m_GlobalTimeStamp; };
+      m_GlobalTimeStamp = Singleton<TimeStamp::GlobalTimeStampType>("GlobalTimeStamp", func, deleteFunc);
     }
   return m_GlobalTimeStamp;
 }
 
-
+/**
+ * This function should only be called from within the Singleton Index.
+ */
 void
 TimeStamp
-::SetGlobalTimeStamp( GlobalTimeStampType * timeStamp )
+::SetGlobalTimeStamp( void * timeStamp )
 {
-  m_GlobalTimeStamp = timeStamp;
+  delete m_GlobalTimeStamp;
+  m_GlobalTimeStamp = reinterpret_cast<GlobalTimeStampType *>(timeStamp);
 }
 
 /**
@@ -149,6 +91,5 @@ TimeStamp
 }
 
 TimeStamp::GlobalTimeStampType * TimeStamp::m_GlobalTimeStamp;
-
 
 } // end namespace itk

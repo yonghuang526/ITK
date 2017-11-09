@@ -28,6 +28,8 @@ namespace itk
  * Allows floating point exceptions to be caught during program execution.
  * \ingroup ITKCommon
  */
+struct ExceptionGlobals;
+
 class ITKCommon_EXPORT FloatingPointExceptions
 {
 public:
@@ -56,9 +58,10 @@ private:
                                                             // implemented.
   void operator=(const FloatingPointExceptions &);          // Not implemented.
 
+  static void SetExceptionGlobals(void * exceptions);
+  static ExceptionGlobals* GetExceptionGlobals();
   /** static member that controls what happens during an exception */
-  static ExceptionAction m_ExceptionAction;
-  static bool            m_Enabled;
+  static ExceptionGlobals * m_ExceptionGlobals;
 };
 }
 

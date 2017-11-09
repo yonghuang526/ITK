@@ -224,14 +224,6 @@ public:
       ThreadingFunctorType funcP,
       ProcessObject* filter);
 
-  /** Set/Get the pointer to MultiThreaderBaseGlobals.
-   * Note that these functions are not part of the public API and should not be
-   * used outside of ITK. They are an implementation detail and will be
-   * removed in the future. Also note that SetMultiThreaderBaseGlobals is not
-   * concurrent thread safe. */
-  static MultiThreaderBaseGlobals *GetMultiThreaderBaseGlobals();
-  static void SetMultiThreaderBaseGlobals(MultiThreaderBaseGlobals * multiThreaderBaseGlobals);
-
 protected:
   MultiThreaderBase();
   ~MultiThreaderBase() override;
@@ -289,6 +281,15 @@ protected:
   void *m_SingleData;
 
 private:
+
+  /** Set/Get the pointer to MultiThreaderBaseGlobals.
+   * Note that these functions are not part of the public API and should not be
+   * used outside of ITK. They are an implementation detail and will be
+   * removed in the future. Also note that SetMultiThreaderBaseGlobals is not
+   * concurrent thread safe. */
+  static MultiThreaderBaseGlobals *GetMultiThreaderBaseGlobals();
+  static void SetMultiThreaderBaseGlobals(void * multiThreaderBaseGlobals);
+
   static MultiThreaderBaseGlobals * m_MultiThreaderBaseGlobals;
   /** Friends of Multithreader.
    * ProcessObject is a friend so that it can call PrintSelf() on its

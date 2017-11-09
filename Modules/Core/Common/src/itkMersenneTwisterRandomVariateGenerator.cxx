@@ -23,10 +23,17 @@ namespace itk
 namespace Statistics
 {
 
-// Static/Global variables
-MersenneTwisterRandomVariateGenerator::Pointer MersenneTwisterRandomVariateGenerator::m_StaticInstance = nullptr;
-SimpleFastMutexLock MersenneTwisterRandomVariateGenerator::m_StaticInstanceLock;
-MersenneTwisterRandomVariateGenerator::IntegerType MersenneTwisterRandomVariateGenerator::m_StaticDiffer = 0;
+struct MersenneTwisterGlobals
+{
+  MersenneTwisterGlobals():m_StaticInstance(nullptr),
+  m_StaticDiffer(0)
+  {};
+  MersenneTwisterRandomVariateGenerator::Pointer m_StaticInstance;
+  SimpleFastMutexLock m_StaticInstanceLock;
+  MersenneTwisterRandomVariateGenerator::IntegerType m_StaticDiffer = 0;
+};
+
+MersenneTwisterGlobals * MersenneTwisterRandomVariateGenerator::m_StaticGlobals;
 
 MersenneTwisterRandomVariateGenerator::Pointer
 MersenneTwisterRandomVariateGenerator
@@ -57,19 +64,42 @@ MersenneTwisterRandomVariateGenerator
   return obj;
 }
 
+
+void
+MersenneTwisterRandomVariateGenerator
+::SetStaticGlobals(void * globals)
+{
+  m_StaticGlobals = reinterpret_cast<MersenneTwisterGlobals *>(globals);
+}
+
+MersenneTwisterGlobals *
+MersenneTwisterRandomVariateGenerator
+::GetStaticGlobals()
+{
+  if( m_StaticGlobals == nullptr )
+  {
+    static auto func = [](void * a){ SetStaticGlobals(a); };
+    static auto deleteFunc = [](){ delete m_StaticGlobals; };
+    m_StaticGlobals = Singleton<MersenneTwisterGlobals>("MersenneTwisterGlobals", func, deleteFunc);
+  }
+  return m_StaticGlobals;
+}
+
 MersenneTwisterRandomVariateGenerator::Pointer
 MersenneTwisterRandomVariateGenerator
 ::GetInstance()
 {
-  MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticInstanceLock);
+  static MersenneTwisterGlobals * staticGlobals = GetStaticGlobals();
+  (void) staticGlobals;
+  MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticGlobals->m_StaticInstanceLock);
 
-  if ( !m_StaticInstance )
+  if ( !m_StaticGlobals->m_StaticInstance )
     {
-    m_StaticInstance  = MersenneTwisterRandomVariateGenerator::CreateInstance();
-    m_StaticInstance->SetSeed();
+    m_StaticGlobals->m_StaticInstance  = MersenneTwisterRandomVariateGenerator::CreateInstance();
+    m_StaticGlobals->m_StaticInstance->SetSeed();
     }
 
-  return m_StaticInstance;
+  return m_StaticGlobals->m_StaticInstance;
 }
 
 MersenneTwisterRandomVariateGenerator
@@ -85,6 +115,8 @@ MersenneTwisterRandomVariateGenerator::IntegerType
 MersenneTwisterRandomVariateGenerator
 ::hash(time_t t, clock_t c)
 {
+  static MersenneTwisterGlobals * staticGlobals = GetStaticGlobals();
+  (void) staticGlobals;
   // Get an IntegerType from t and c
   // Better than IntegerType(x) in case x is floating point in [0,1]
   // Based on code by Lawrence Kirby: fred at genesis dot demon dot co dot uk
@@ -108,18 +140,20 @@ MersenneTwisterRandomVariateGenerator
     h2 += p[j];
     }
   // lock for m_StaticDiffer
-  MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticInstanceLock);
-  return ( h1 + m_StaticDiffer++ ) ^ h2;
+  MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticGlobals->m_StaticInstanceLock);
+  return ( h1 + m_StaticGlobals->m_StaticDiffer++ ) ^ h2;
 }
 
 MersenneTwisterRandomVariateGenerator::IntegerType
 MersenneTwisterRandomVariateGenerator
 ::GetNextSeed()
 {
+  static MersenneTwisterGlobals * staticGlobals = GetStaticGlobals();
+  (void) staticGlobals;
   IntegerType newSeed = GetInstance()->GetSeed();
   {
-    MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticInstanceLock);
-    newSeed += m_StaticDiffer++;
+    MutexLockHolder<SimpleFastMutexLock> mutexHolder(m_StaticGlobals->m_StaticInstanceLock);
+    newSeed += m_StaticGlobals->m_StaticDiffer++;
   }
   return newSeed;
 }
