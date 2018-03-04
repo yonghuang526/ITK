@@ -61,6 +61,11 @@ public:
     m_Pointer(nullptr)
   { }
 
+  /** Constructor with explicit support for initializing with NULL */
+  explicit constexpr SmartPointer (decltype(NULL)) noexcept:
+    m_Pointer(nullptr)
+  { }
+
   /** Copy constructor  */
   SmartPointer (const SmartPointer& p) noexcept:
     m_Pointer(p.m_Pointer)

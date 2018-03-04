@@ -92,6 +92,10 @@ TEST(SmartPointer, EmptyAndNull)
   using ObjectPointer = itk::SmartPointer<itk::Object>;
   using ConstObjectPointer = itk::SmartPointer<const itk::Object>;
 
+  // Test initializing with NULL for backward compatibility
+  ObjectPointer ptrNULLinit(NULL);
+  EXPECT_TRUE(ptrNULLinit.IsNull());
+
   ObjectPointer ptr;
 
 
