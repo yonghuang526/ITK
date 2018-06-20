@@ -60,6 +60,8 @@ LiThresholdCalculator<THistogram, TOutput>
   double tolerance; // threshold tolerance
   double temp;
 
+  const double bin_min = histogram->GetBinMin(0,0);
+
   tolerance = 0.5;
   num_pixels = histogram->GetTotalFrequency();
 
@@ -82,6 +84,12 @@ LiThresholdCalculator<THistogram, TOutput>
     typename HistogramType::IndexType local_index;
     histogram->GetIndex(ot, local_index);
     histthresh = local_index[0];
+
+    if( histogram->IsIndexOutOfBounds(local_index) )
+      {
+      itkWarningMacro("Unexpected histogram index out of bounds!");
+      break;
+      }
     }
 
   // Calculate the means of background and object pixels
@@ -114,6 +122,11 @@ LiThresholdCalculator<THistogram, TOutput>
   //
   //#define IS_NEG( x ) ( ( x ) < -DBL_EPSILON )
   //
+
+  // Shift the mean by the minimum to have the range start at zero,
+  // and void the log of a negative value.
+  mean_back -= bin_min;
+  mean_obj -= bin_min;
   temp = ( mean_back - mean_obj ) / ( std::log ( mean_back ) - std::log ( mean_obj ) );
 
   double epsilon = itk::NumericTraits<double>::epsilon();
@@ -127,6 +140,11 @@ LiThresholdCalculator<THistogram, TOutput>
     }
   //  Stop the iterations when the difference between the new and old threshold
   // values is less than the tolerance
+
+  // Shift the result back.
+  new_thresh += bin_min;
+
+
   }
   while ( std::abs ( new_thresh - old_thresh ) > tolerance );
 
