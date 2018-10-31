@@ -19,29 +19,29 @@ if(ITK_USE_SYSTEM_VXL)
 else()
 
   # ITK and several external packages still use legacy method signatures for VNL
-  set(VNL_CONFIG_LEGACY_METHODS ON CACHE BOOL "Whether backward-compatibility methods are provided by vnl." FORCE )
-  set(BUILD_CORE_NUMERICS       ON  CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(VXL_NO_EXPORT             ON CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_GEOMETRY       OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_IMAGING        OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_SERIALISATION  OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_UTILITIES      OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_VIDEO          OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CONTRIB             OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VNL_CONFIG_LEGACY_METHODS     OFF CACHE BOOL "Whether backward-compatibility methods are provided by vnl." FORCE )
+  set(VXL_BUILD_CORE_NUMERICS       ON  CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_NO_EXPORT                 ON  CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_GEOMETRY       OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_IMAGING        OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_SERIALISATION  OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_UTILITIES      OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_VIDEO          OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CONTRIB             OFF CACHE BOOL "VXL configuration for ITK" FORCE )
 #
   set(VXL_FORCE_V3P_CLIPPER     OFF CACHE BOOL "VXL configuration for ITK" FORCE )
   set(VXL_FORCE_V3P_ZLIB        OFF CACHE BOOL "VXL configuration for ITK" FORCE )
-  set(BUILD_CORE_IMAGING        OFF CACHE BOOL "VXL configuration for ITK" FORCE )
+  set(VXL_BUILD_CORE_IMAGING        OFF CACHE BOOL "VXL configuration for ITK" FORCE )
 
-  mark_as_advanced(FORCE BUILD_CONTRIB
-    BUILD_CORE_GEOMETRY
-    BUILD_CORE_IMAGING
-    BUILD_CORE_NUMERICS
-    BUILD_CORE_SERIALISATION
-    BUILD_CORE_UTILITIES
-    BUILD_FOR_VXL_DASHBOARD
-    BUILD_NONDEPRECATED_ONLY
-    TESTLIB_VCL_WHERE_ROOT_DIR_H
+  mark_as_advanced(FORCE VXL_BUILD_CONTRIB
+    VXL_BUILD_CORE_GEOMETRY
+    VXL_BUILD_CORE_IMAGING
+    VXL_BUILD_CORE_NUMERICS
+    VXL_BUILD_CORE_SERIALISATION
+    VXL_BUILD_CORE_UTILITIES
+    VXL_BUILD_FOR_VXL_DASHBOARD
+    VXL_BUILD_NONDEPRECATED_ONLY
+    VXL_TESTLIB_VCL_WHERE_ROOT_DIR_H
     VCL_INCLUDE_CXX_0X
     VXL_EXTRA_CMAKE_CXX_FLAGS
     VXL_EXTRA_CMAKE_C_FLAGS
