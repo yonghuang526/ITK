@@ -1,53 +1,42 @@
 // This is core/vnl/vnl_sample.cxx
-#ifdef VCL_NEEDS_PRAGMA_INTERFACE
-#pragma implementation
-#endif
 
 #include <cmath>
 #include <ctime>
+#include <random>
+
 #include "vnl_sample.h"
+#include <cstdlib>
 #include <vnl/vnl_math.h>
 
-#include <vcl_compiler.h>
-#include <vxl_config.h>
+static std::random_device private_vnl_sample_rd;  //Will be used to obtain a seed for the random number engine
 
-#include <cstdlib> // dont_vxl_filter
-
-#if !VXL_STDLIB_HAS_DRAND48
-// rand() is not always a good random number generator,
-// so use a simple congruential random number generator when drand48 not available - PVr
-static unsigned long vnl_sample_seed = 12345;
+#if 1 // Use linear_congruential_engine similar to drand48
+//minstd_rand	std::linear_congruential_engine<std::uint_fast32_t, 48271, 0, 2147483647>
+//Newer "Minimum standard", recommended by Park, Miller, and Stockmeyer in 1993
+static std::minstd_rand private_vnl_sample_gen(private_vnl_sample_rd()); //
+#else
+//Standard mersenne_twister_engine seeded with rd()
+static std::mt19937 private_vnl_sample_gen(private_vnl_sample_rd());
 #endif
-
 
 void vnl_sample_reseed()
 {
-#if VXL_STDLIB_HAS_SRAND48
-  srand48( std::time(VXL_NULLPTR) );
-#elif !VXL_STDLIB_HAS_DRAND48
-  vnl_sample_seed = (unsigned long)std::time(0);
-#endif
+	private_vnl_sample_gen.seed();
 }
 
 void vnl_sample_reseed(int seed)
 {
-#if VXL_STDLIB_HAS_SRAND48
-  srand48( seed );
-#elif !VXL_STDLIB_HAS_DRAND48
-  vnl_sample_seed = seed;
-#endif
+	private_vnl_sample_gen.seed(seed);
+}
+
+double vnl_sample_uniform01()
+{
+	return std::generate_canonical<double, 48>(private_vnl_sample_gen); // uniform on [0, 1)
 }
 
 double vnl_sample_uniform(double a, double b)
 {
-#if VXL_STDLIB_HAS_DRAND48
-  double u = drand48(); // uniform on [0, 1)
-#else
-// rand() is not always a good random number generator,
-// so use a simple congruential random number generator when drand48 not available - PVr
-  vnl_sample_seed = (vnl_sample_seed*16807)%2147483647L;
-  double u = double(vnl_sample_seed)/2147483647L; // uniform on [0, 1)
-#endif
+  const double u = std::generate_canonical<double, 48>(private_vnl_sample_gen); // uniform on [0, 1)
   return (1.0 - u)*a + u*b;
 }
 
@@ -65,7 +54,7 @@ void vnl_sample_normal_2(double *x, double *y)
 double vnl_sample_normal(double mean, double sigma)
 {
   double x;
-  vnl_sample_normal_2(&x, VXL_NULLPTR);
+  vnl_sample_normal_2(&x, nullptr);
   return mean + sigma * x;
 }
 
