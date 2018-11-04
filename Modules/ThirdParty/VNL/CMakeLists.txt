@@ -18,7 +18,7 @@ if(ITK_USE_SYSTEM_VXL)
   set(ITKVNL_NO_SRC 1)
 else()
 
-  # ITK and several external packages still use legacy method signatures for VNL
+  # ITKv5 no longer supports legacy method signatures for VNL
   set(VNL_CONFIG_LEGACY_METHODS     OFF CACHE BOOL "Whether backward-compatibility methods are provided by vnl." FORCE )
   set(VXL_BUILD_CORE_NUMERICS       ON  CACHE BOOL "VXL configuration for ITK" FORCE )
   set(VXL_BUILD_CORE_NUMERICS_ONLY  ON  CACHE BOOL "VXL configuration for ITK" FORCE ) #This hides other VXL core options from CMake
