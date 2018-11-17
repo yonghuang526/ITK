@@ -553,7 +553,7 @@ endmacro()
 # filters which take different image types as different template parameters, use
 # itk_wrap_image_filter_types or itk_wrap_image_filter_combinations.
 # These macros also take an optional second parameter which is a "dimensionality
-# condition" to restrict the dimensions that theis filter will be instantiated
+# condition" to restrict the dimensions that this filter will be instantiated
 # for. The condition can either be a single number indicating the one dimension
 # allowed, a list of dimensions that are allowed (either as a single ;-delimited
 # string or just a set of separate parameters), or something of the form "n+"

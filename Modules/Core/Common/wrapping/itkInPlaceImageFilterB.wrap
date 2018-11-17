@@ -1,4 +1,20 @@
+#----
+#
+# NOTE: Since an InPlaceImageFilter reuses the input bulk data memory for the
+# output bulk data memory, the input image type must match the output image type.
+#
+# If the input and output image types are not identical, the filter reverts to a
+# traditional ImageToImageFilter behaviour where an output image is allocated.
+#
+# Any filter instantiatiated by InPlaceImageToImageFilter, but also be instantiated
+# by the ImageToImageFilter
+#
+#----
 itk_wrap_class("itk::InPlaceImageFilter" POINTER)
+
+  # complex types
+  itk_wrap_image_filter("${WRAP_ITK_COMPLEX_REAL}" 2)
+
   # VectorImage <-> scalar
   UNIQUE(to_types "UC;${WRAP_ITK_SCALAR}")
   foreach(d ${ITK_WRAP_IMAGE_DIMS})
@@ -12,19 +28,23 @@ itk_wrap_class("itk::InPlaceImageFilter" POINTER)
   itk_wrap_image_filter_combinations("${WRAP_ITK_VECTOR}" "${WRAP_ITK_SCALAR}")
   itk_wrap_image_filter_combinations("${WRAP_ITK_SCALAR}" "${WRAP_ITK_VECTOR}")
 
-  # RGB -> Scalar
-  foreach(type ${WRAP_ITK_SCALAR})
-    foreach(rgbtype ${WRAP_ITK_RGB})
-      itk_wrap_image_filter_combinations("${rgbtype}" "${type}")
-    endforeach()
-  endforeach()
+  # scalar <-> RGB
+  UNIQUE(stypes "${ITKM_IT};UL;${WRAP_ITK_SCALAR}")
+  itk_wrap_image_filter_combinations("${stypes}" "${WRAP_ITK_RGB}")
+  itk_wrap_image_filter_combinations("${WRAP_ITK_RGB}" "${stypes}")
 
-  # complex types
-  itk_wrap_image_filter_combinations("${WRAP_ITK_COMPLEX_REAL}" "${WRAP_ITK_COMPLEX_REAL}")
+  # scalar <-> RGBA
+  UNIQUE(stypes "${ITKM_IT};UL;${WRAP_ITK_SCALAR}")
+  itk_wrap_image_filter_combinations("${stypes}" "${WRAP_ITK_RGBA}")
+  itk_wrap_image_filter_combinations("${WRAP_ITK_RGBA}" "${stypes}")
+
 
   # complex <-> scalar
   itk_wrap_image_filter_combinations("${WRAP_ITK_SCALAR}" "${WRAP_ITK_COMPLEX_REAL}")
   itk_wrap_image_filter_combinations("${WRAP_ITK_COMPLEX_REAL}" "${WRAP_ITK_SCALAR}")
+
+  # complex types
+  itk_wrap_image_filter_combinations("${WRAP_ITK_COMPLEX_REAL}" "${WRAP_ITK_COMPLEX_REAL}")
 
   # Wrap dim=3 -> dim=2, dim=3 -> dim=2, etc.
   foreach(d ${ITK_WRAP_IMAGE_DIMS})
