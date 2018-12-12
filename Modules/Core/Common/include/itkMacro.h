@@ -147,21 +147,13 @@ namespace itk
 #endif
 
 /*
- * ITK only supports MSVC++ 7.1 and greater
- * MSVC++ 11.0 _MSC_VER = 1700
- * MSVC++ 10.0 _MSC_VER = 1600
- * MSVC++ 9.0 _MSC_VER = 1500
- * MSVC++ 8.0 _MSC_VER = 1400
- * MSVC++ 7.1 _MSC_VER = 1310
- * MSVC++ 7.0 _MSC_VER = 1300
- * MSVC++ 6.0 _MSC_VER = 1200
- * MSVC++ 5.0 _MSC_VER = 1100
+ * ITK only supports MSVC_2105 or greater is required to have sufficient C++11 support
 */
-#if defined( _MSC_VER ) && ( _MSC_VER < 1310 )
-//#error "_MSC_VER < 1310 (MSVC++ 7.1) not supported under ITKv4"
+#if defined( _MSC_VER ) && ( _MSC_VER < 1900 )
+#  error "_MSC_VER < 1900 (MSVC++ 2015) not supported with ITKv5"
 #endif
-#if defined( __SUNPRO_CC ) && ( __SUNPRO_CC < 0x590 )
-#error "__SUNPRO_CC < 0x590 not supported under ITKv4"
+#if defined( __SUNPRO_CC ) && ( __SUNPRO_CC < 0x5130 )
+#error "__SUNPRO_CC < 0x5130 not supported under ITKv5"
 #endif
 #if defined( __CYGWIN__ )
 #error "The Cygwin compiler is not supported in ITKv4 and above"
@@ -174,12 +166,9 @@ namespace itk
 #endif
 #if defined( __GNUC__ ) && ( __GNUC__ < 3 )
 #error "The __GNUC__ version 2.95 compiler is not supprted under ITKv4 and above"
-#if defined( __sgi )
-//This is true for IRIX 6.5.18m with MIPSPro 7.3.1.3m.
-//TODO: At some future point, it may be necessary to
-//define a minimum __sgi version that will work.
-#error "The __sgi compiler is not supprted under ITKv4 and above"
 #endif
+#if defined( __sgi )
+#error "The __sgi compiler is not supprted under ITKv4 and above"
 #endif
 
 // Setup symbol exports

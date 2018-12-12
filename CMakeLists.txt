@@ -65,6 +65,7 @@ project(ITK
   LANGUAGES CXX C)
 
 set(ITK_CMAKE_DIR "${ITK_SOURCE_DIR}/CMake")
+include(ITKTestCXX11Features)
 
 if (APPLE)
   include(itkApple)
